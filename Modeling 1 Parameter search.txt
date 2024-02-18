@@ -1,0 +1,104 @@
+//Simple script to find optimal parameters for the algebraic attack on RSD modeling 1 (large fields). See Section 5 of eprint.iacr.org/2023/176
+//Running time is dependent on MaxSeries, which decides how much of the Hilbert Series to compute. This can be tweaked to make the search faster.
+//Note: The search only considers attacks that solves at degree at least 2.
+
+
+clear;
+
+
+h := 1419;
+k := 32771;
+n := 2^20;
+//B := Ceiling(n/h);
+B := Floor(n/h);
+//B := n/h;
+
+
+//Where to cap the Hilbert Series:
+MaxSeries := 20;
+
+
+
+GetDreg := function(HST,l);
+
+	for i in [2..#Coefficients(HST)] do
+	
+		if Coefficients(HST)[i] le 0 then
+		
+			return i-1;
+		
+		end if;
+	
+	end for;
+	
+	return l;
+
+end function;
+
+
+T<t>:=PowerSeriesRing(Rationals(),MaxSeries);
+
+
+Best := 2000;
+
+Bu := -1;
+Bf := -1;
+BestHST := -1;
+
+
+for u in [0..B-1] do
+	u;
+	for f in [0..h] do
+
+		if f*u gt k then
+		
+			continue;
+		
+		end if;
+		
+
+		
+		HSThom := (1-t)^(n-k-1)*(1+(B-u)*(t/(1-t)))^f*(1+B*(t/(1-t)))^(h-f);
+		Mons := (1+(B-u)*(t/(1-t)))^f*(1+B*(t/(1-t)))^(h-f);
+		d := GetDreg(HSThom,MaxSeries);
+
+		if d eq MaxSeries then
+		
+			continue;
+		
+		end if;
+		
+		if d eq 1 then
+		
+			continue;
+		
+		end if;
+
+		mac := 0;
+		for l in [1..d+1] do
+				
+			mac := mac + Coefficients(Mons)[l];
+				
+		end for;
+		
+		P := (1-(u/B))^f;
+		comp := Log(2,3*(1/P)*(k+1-f*u)*(mac)^2);
+			
+		if Best gt comp then
+			
+			Bu := u;
+			Bf := f;
+			BestHST := d;
+			Best := comp;
+				
+		end if;
+				
+	end for;
+	
+end for;
+				
+Best;
+Bu;
+Bf;
+BestHST;
+
